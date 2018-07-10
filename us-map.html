@@ -15,13 +15,11 @@ path:hover {
 div.tooltip {
  	position: absolute;
 	text-align: center;
-	width: 60px;
-	height: 28px;
 	padding: 2px;
 	font: 12px sans-serif;
 	background: white;
 	border: 0px;
-	border-radius: 8px;
+	border-radius: 3px;
 	pointer-events: none;
 }
 
@@ -105,7 +103,9 @@ var visited_cities = [
  	{"name":["Worcester","Massachusetts"],
  	 "coordinates":[-71.8023,42.2626]},
  	{"name":["Peoria","Illinois"],
- 	 "coordinates":[-89.5890,40.6936]}
+ 	 "coordinates":[-89.5890,40.6936]},
+ 	{"name":["St. Louis","Missouri"],
+ 	 "coordinates":[-90.1994,38.6270]}
 ];
 
 var visited_parks = [
@@ -145,7 +145,13 @@ var visited_parks = [
 	"coordinates":[-87.2006,39.8909]},
  {"name":["Acadia","Maine"],
  	"type":"National Park",
-	"coordinates":[-68.2733,44.3386]}
+	"coordinates":[-68.2733,44.3386]},
+ {"name":["Valley of Fire","Nevada"],
+ 	"type":"State Park",
+	"coordinates":[-114.5313,36.4855]},
+ {"name":["Great Smoky Mountain","North Carolina"],
+ 	"type":"National Park",
+	"coordinates":[-83.5070,35.6532]},
 ];
 
 //Width and height of map
@@ -237,7 +243,12 @@ d3.csv("stateslived.csv", function(data) {
 	
 for (var i = 0; i < visited_cities.length; i++)
 		addpoint(visited_cities[i].coordinates[0],
-			visited_cities[i].coordinates[1], visited_cities[i].name );
+			visited_cities[i].coordinates[1], visited_cities[i].name[0], "black");
+
+			
+for (var i = 0; i < visited_parks.length; i++)
+		addpoint(visited_parks[i].coordinates[0],
+			visited_parks[i].coordinates[1], visited_parks[i].name[0]+" "+visited_parks[i].type, "green");
 /*
 // Map the cities I have lived in!
 d3.csv("cities-lived.csv", function(data) {
@@ -307,7 +318,7 @@ var legend = d3.select("body").append("svg")
 // https://stackoverflow.com/questions/24045673/reorder-elements-of-svg-z-index-in-d3-js
 
 
-function addpoint(lon,lat,text) {
+function addpoint(lon,lat,text,color) {
 
   var x = projection([lon,lat])[0];
   var y = projection([lon,lat])[1];
@@ -317,7 +328,8 @@ function addpoint(lon,lat,text) {
   svg.append("svg:circle")
         .attr("cx", x)
         .attr("cy", y)
-        .attr("class","point")
+				.attr("class","point")
+				.attr("fill", color)
 				.attr("r", function(d) { console.log(d); return 2.0;})
 				.on("mouseover",function(){
 					div.transition()
