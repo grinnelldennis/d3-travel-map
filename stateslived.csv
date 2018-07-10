@@ -1,12 +1,12 @@
 state,visited
 Alabama,1
 Alaska,0
-Arkansas,1
+Arkansas,2
 Arizona,1
 California,1
 Colorado,1
 Connecticut,1
-Delaware,1
+Delaware,2
 Florida,1
 Georgia,2
 Hawaii,0
@@ -27,7 +27,7 @@ Mississippi,2
 Montana,0
 North Carolina,1
 North Dakota,0
-Nebraska,1
+Nebraska,2
 New Hampshire,2
 New Jersey,1
 New Mexico,0
@@ -47,5 +47,5 @@ Virginia,1
 Vermont,2
 Washington,0
 Wisconsin,0
-West Virginia,1
+West Virginia,2
 Wyoming,0
