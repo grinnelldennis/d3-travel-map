@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<!-- borrowed from http://bl.ocks.org/michellechandra/0b2ce4923dc9b5809922 -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<style type="text/css">
+
+/* On mouse hover, lighten state color */
+path:hover {
+	fill-opacity: .7;
+}
+
+/* Style for Custom Tooltip */
+div.tooltip {
+ 	position: absolute;
+	text-align: center;
+	width: 60px;
+	height: 28px;
+	padding: 2px;
+	font: 12px sans-serif;
+	background: white;
+	border: 0px;
+	border-radius: 8px;
+	pointer-events: none;
+}
+
+/* Legend Font Style */
+body {
+	font: 11px sans-serif;
+}
+
+/* Legend Position Style */
+.legend {
+	position:absolute;
+	left:800px;
+	top:350px;
+}
+
+</style>
+</head>
+<body>
+<script type="text/javascript">
+
+/*  This visualization was made possible by modifying code provided by:
+
+Scott Murray, Choropleth example from "Interactive Data Visualization for the Web"
+https://github.com/alignedleft/d3-book/blob/master/chapter_12/05_choropleth.html
+
+Malcolm Maclean, tooltips example tutorial
+http://www.d3noob.org/2013/01/adding-tooltips-to-d3js-graph.html
+
+Mike Bostock, Pie Chart Legend
+http://bl.ocks.org/mbostock/3888852  */
+
+var visited_cities = [
+	{"name":["San Francisco","California"],
+	 "coordinates":[-122.375416,37.618806]},
+ 	{"name":["Las Vegas","Nevada"],
+ 	 "coordinates":[-115.152249,36.080056]},
+ 	{"name":["Salt Lake City","Utah"],
+ 	 "coordinates":[-111.977772,40.788388]},
+ 	{"name":["Denver","Colorado"],
+ 	 "coordinates":[-104.673166,39.861667]},
+ 	{"name":["Omaha","Nebraska"],
+ 	 "coordinates":[-95.9345,41.2565]},
+ 	{"name":["Des Moines","Iowa"],
+ 	 "coordinates":[-93.663082,41.533972]},
+ 	{"name":["Iowa City","Iowa"],
+ 	 "coordinates":[-91.5302,41.6611]},
+ 	{"name":["Minneapolis","Minnesota"],
+ 	 "coordinates":[-93.221777,44.881972]},
+ 	{"name":["Davenport","Iowa"],
+ 	 "coordinates":[-90.5776,41.5236]},
+ 	{"name":["Chicago","Illinois"],
+ 	 "coordinates":[-87.6298,41.8781]},
+ 	{"name":["West Lafeyette","Indiana"],
+ 	 "coordinates":[-86.9081,40.4259]},
+ 	{"name":["Columbus","Ohio"],
+ 	 "coordinates":[-82.9988,39.9612]},
+ 	{"name":["Memphis","Tennessee"],
+ 	 "coordinates":[-89.976666,35.042417]},
+ 	{"name":["New Orleans","Louisiana"],
+ 	 "coordinates":[-90.0715,29.9511]},
+ 	{"name":["Birmingham","Alabama"],
+ 	 "coordinates":[-86.8025,33.5207]},
+ 	{"name":["Orlando","Florida"],
+ 	 "coordinates":[-81.308999,28.429389]},
+ 	{"name":["Daytona Beach","Florida"],
+ 	 "coordinates":[-81.0228,29.2108]},
+ 	{"name":["Tampa","Florida"],
+ 	 "coordinates":[-82.4572,27.9506]},
+ 	{"name":["Philadelphia","Pennsylvania"],
+ 	 "coordinates":[-75.240660,39.872083]},
+ 	{"name":["Washington D.C.",""],
+ 	 "coordinates":[-77.0369,38.9072]},
+ 	{"name":["Annapolis","Maryland"],
+ 	 "coordinates":[-76.4922,38.9784]},
+ 	{"name":["Baltimore","Maryland"],
+	"coordinates":[-76.668991,39.175728]},
+ 	{"name":["New York City","New York"],
+ 	 "coordinates":[-74.0060,40.7128]},
+ 	{"name":["Portland","Maine"],
+ 	 "coordinates":[-70.2568,43.6591]},
+ 	{"name":["Worcester","Massachusetts"],
+ 	 "coordinates":[-71.8023,42.2626]},
+ 	{"name":["Peoria","Illinois"],
+ 	 "coordinates":[-89.5890,40.6936]}
+];
+
+var visited_parks = [
+
+ {"name":["Zion","Utah"],
+ 	"type":"National Park",
+	"coordinates":[-113.0263,37.2982]},
+ {"name":["Bryce Canyon","Utah"],
+ 	"type":"National Park",
+	"coordinates":[-112.1871,37.5930]},
+ {"name":["Cuyahoga Valley","Ohio"],
+ 	"type":"National Park",
+	"coordinates":[-81.5678,41.2808]},
+ {"name":["Grand Canyon","Arizona"],
+ 	"type":"National Park",
+	"coordinates":[-112.1130,36.1070]},
+ {"name":["Rocky Mountain","Colorado"],
+ 	"type":"National Park",
+	"coordinates":[-105.6836,40.3428]},
+ {"name":["Mammoth Cave","Kentucky"],
+ 	"type":"National Park",
+	"coordinates":[-86.1005,37.1870]},
+ {"name":["Shenandoah","Virginia"],
+ 	"type":"National Park",
+	"coordinates":[-78.6796,38.2928]},
+ {"name":["Maquoketa Cave","Iowa"],
+ 	"type":"State Park",
+	"coordinates":[-90.7658,42.1198]},
+ {"name":["Ledges","Iowa"],
+ 	"type":"State Park",
+	"coordinates":[-93.8748,41.9937]},
+ {"name":["Hocking Hills","Ohio"],
+ 	"type":"State Park",
+	"coordinates":[-82.5357,39.4265]},
+ {"name":["Turkey Run","Indiana"],
+ 	"type":"State Park",
+	"coordinates":[-87.2006,39.8909]},
+ {"name":["Acadia","Maine"],
+ 	"type":"National Park",
+	"coordinates":[-68.2733,44.3386]}
+];
+
+//Width and height of map
+var width = 960;
+var height = 500;
+
+// D3 Projection
+var projection = d3.geo.albersUsa()
+				   .translate([width/2, height/2])    // translate to center of screen
+				   .scale([1000]);          // scale things down so see entire US
+
+// Define path generator
+var path = d3.geo.path()               // path generator that will convert GeoJSON to SVG paths
+		  	 .projection(projection);  // tell path generator to use albersUsa projection
+
+
+// Define linear scale for output
+var color = d3.scale.linear()
+			  .range(["rgb(213,222,217)","#86af49","#e3eaa7","#d5e1df"]);
+
+var legendText = ["Cities Lived", "States Transited", "States Visited", "Nada"];
+
+//Create SVG element and append map to the SVG
+var svg = d3.select("body")
+			.append("svg")
+			.attr("width", width)
+			.attr("height", height);
+
+// Append Div for tooltip to SVG
+var div = d3.select("body")
+		    .append("div")
+    		.attr("class", "tooltip")
+    		.style("opacity", 0);
+
+
+// Load in my states data!
+d3.csv("stateslived.csv", function(data) {
+color.domain([0,1,2,3]); // setting the range of the input data
+
+// Load GeoJSON data and merge with states data
+d3.json("us-states.json", function(json) {
+
+// Loop through each state data value in the .csv file
+for (var i = 0; i < data.length; i++) {
+
+	// Grab State Name
+	var dataState = data[i].state;
+
+	// Grab data value
+	var dataValue = data[i].visited;
+
+	// Find the corresponding state inside the GeoJSON
+	for (var j = 0; j < json.features.length; j++)  {
+		var jsonState = json.features[j].properties.name;
+
+		if (dataState == jsonState) {
+
+		// Copy the data value into the JSON
+		json.features[j].properties.visited = dataValue;
+
+		// Stop looking through the JSON
+		break;
+		}
+	}
+}
+
+// Bind the data to the SVG and create one path per GeoJSON feature
+svg.selectAll("path")
+	.data(json.features)
+	.enter()
+	.append("path")
+	.attr("d", path)
+	.style("stroke", "#fff")
+	.style("stroke-width", "1")
+	.style("fill", function(d) {
+
+	// Get data value
+	var value = d.properties.visited;
+
+	if (value) {
+	//If value exists…
+	return color(value);
+	} else {
+	//If value is undefined…
+	return "rgb(213,222,217)";
+	}
+});
+
+/*
+// Map the cities I have lived in!
+d3.csv("cities-lived.csv", function(data) {
+
+svg.selectAll("circle")
+	.data(data)
+	.enter()
+	.append("circle")
+	.attr("cx", function(d) {
+		return projection([d.lon, d.lat])[0];
+	})
+	.attr("cy", function(d) {
+		return projection([d.lon, d.lat])[1];
+	})
+	.attr("r", function(d) {
+		return Math.sqrt(d.years) * 4;
+	})
+		.style("fill", "rgb(217,91,67)")
+		.style("opacity", 0.85)
+
+	// Modification of custom tooltip code provided by Malcolm Maclean, "D3 Tips and Tricks"
+	// http://www.d3noob.org/2013/01/adding-tooltips-to-d3js-graph.html
+	.on("mouseover", function(d) {
+    	div.transition()
+      	   .duration(200)
+           .style("opacity", .9);
+           div.text(d.place)
+           .style("left", (d3.event.pageX) + "px")
+           .style("top", (d3.event.pageY - 28) + "px");
+	})
+
+    // fade out tooltip on mouse out
+    .on("mouseout", function(d) {
+        div.transition()
+           .duration(500)
+           .style("opacity", 0);
+    });
+});
+*/
+
+// Modified Legend Code from Mike Bostock: http://bl.ocks.org/mbostock/3888852
+var legend = d3.select("body").append("svg")
+      			.attr("class", "legend")
+     			.attr("width", 140)
+    			.attr("height", 200)
+   				.selectAll("g")
+   				.data(color.domain().slice().reverse())
+   				.enter()
+   				.append("g")
+     			.attr("transform", function(d, i) { return "translate(0," + i * 20 + ")"; });
+
+  	legend.append("rect")
+   		  .attr("width", 18)
+   		  .attr("height", 18)
+   		  .style("fill", color);
+
+  	legend.append("text")
+  		  .data(legendText)
+      	  .attr("x", 24)
+      	  .attr("y", 9)
+      	  .attr("dy", ".35em")
+      	  .text(function(d) { return d; });
+	});
+
+});
+
+// https://stackoverflow.com/questions/24045673/reorder-elements-of-svg-z-index-in-d3-js
+var g = svg.append('g');
+
+for (var i = 0; i < visited_cities.length; i++)
+		addpoint(visited_cities[i].coordinates[0],
+			visited_cities[i].coordinates[1], visited_cities[i].name );
+
+function addpoint(lon,lat,text) {
+
+  var gpoint = g.append("g").attr("class", "gpoint");
+  var x = projection([lon,lat])[0];
+  var y = projection([lon,lat])[1];
+	console.log(y,x);
+	console.log(lon, lat);
+	console.log(text);
+  gpoint.append("svg:circle")
+        .attr("cx", x)
+        .attr("cy", y)
+        .attr("class","point")
+        .attr("r", function(d) { console.log(d); return 2.0;});
+//        .on('mouseover', function(d){
+//          handleMouseOverCity(text);
+//        })
+//        .on('mouseout', handleMouseOut);
+}
+
+</script>
+</body>
+</html>
