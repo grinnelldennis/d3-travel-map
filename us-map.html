@@ -189,12 +189,12 @@ var div = d3.select("body")
 						.style("opacity", 0);
 
 
-d3.csv("stateslived.csv", function(data) {
+d3.csv("https://raw.githubusercontent.com/grinnelldennis/d3-travel-map/master/stateslived.csv", function(data) {
 	// Set range of the input data
 	color.domain([0,1,2,3]); 
 
 	// Load GeoJSON data and merge with states data
-	d3.json("us-states.json", function(json) {
+	d3.json("https://raw.githubusercontent.com/grinnelldennis/d3-travel-map/master/us-states.json", function(json) {
 
 		// Loop through each state data value in the .csv file
 		for (var i = 0; i < data.length; i++) {
